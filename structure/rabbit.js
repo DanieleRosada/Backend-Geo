@@ -26,8 +26,8 @@ module.exports = (function () {
             }
         },
         reciveToQueue: (nameq, callback) => {
-            if (reciver) {
-                obj._sendMessage(nameq, param);
+            if (reciver) { 
+                obj._reciveMessage(nameq, callback);
             } else {
                 obj.init().then(function (ch) {
                     reciver = ch;

@@ -1,5 +1,6 @@
-// const producerRMQ = require('./rabbitMQ/producer');
-// const consumerRMQ = require('./rabbitMQ/consumer');
+const producerRMQ = require('./rabbitMQ/producer');
+const consumerRMQ = require('./rabbitMQ/consumer');
+const socketIO = require('./socketIO/socket');
 
 const app = require('express')();
 const cors = require('cors');
@@ -14,7 +15,7 @@ app.use(bodyParser.json());
 app.get('/busesMenu', function (req, res){
     busesController.getBuses( function(err, rows){
         if(err) res.send(err);
-        res.send(rows)
+        res.send(rows);
     });
 });
 

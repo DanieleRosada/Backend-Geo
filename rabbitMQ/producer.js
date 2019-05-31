@@ -46,7 +46,11 @@ function sendStateWhenDoorIsOpen() {
 }
 async function state(bus) {
     let payload = await bus.generatePayload();
-    if (payload) rabbit.sendToQueue('busesQueue', JSON.stringify(payload));
+    if (payload){
+        payload.forEach(e => {
+            rabbit.sendToQueue('busesQueue', JSON.stringify(e));
+        });
+    }
 }
 
 setInterval(inizializate, 60000);
