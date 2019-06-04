@@ -2,31 +2,25 @@ const cfg = require('../config/socket');
 var io = require('socket.io').listen(cfg.port);
 const rabbit = require('../structure/rabbit');
 
-io.sockets.on('connection', function (socket) {
-  console.log("connected");
-});
-
-
-io.sockets.on('connect', () => {
-  console.log("connesso")
-  rabbit.reciveToQueue('dataQueue', function (value) {
-    let data = value.content.toString();
-    io.sockets.to(data.buscode).emit("data", data);
+io.on('connection', (socket) => {
+  rabbit.reciveToQueue('dataQueue', function (data) {
+    let position = JSON.parse(data.content.toString());
+    socket.to(position.buscode).emit("data", position);
   }, { noAck: true });
+
+  socket.on('join', function (data) {
+    console.log("join", data)
+    socket.join(data.code);
+  });
+
+  socket.on('leave', function (data) {
+    console.log("leave", data)
+    socket.leave(data.code);
+  });
 });
 
 
-io.sockets.on('join', function (code) {
-  console.log("join", data)
-  io.sockets.join(code);
-});
-
-io.sockets.on('leave', function (code) {
-  console.log("leave", code)
-  io.sockets.leave(code);
-});
-
-io.sockets.on('disconnect', () => {
+io.on('disconnect', () => {
   console.log("disconnect")
-  io.sockets.connect();
+  io.connect();
 });
