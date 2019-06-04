@@ -1,5 +1,5 @@
-const producerRMQ = require('./rabbitMQ/producer');
-const consumerRMQ = require('./rabbitMQ/consumer');
+// const producerRMQ = require('./rabbitMQ/producer');
+// const consumerRMQ = require('./rabbitMQ/consumer');
 const socketIO = require('./socketIO/socket');
 
 const app = require('express')();
