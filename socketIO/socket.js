@@ -9,18 +9,15 @@ io.on('connection', (socket) => {
   }, { noAck: true });
 
   socket.on('join', function (data) {
-    console.log("join", data)
     socket.join(data.code);
   });
 
   socket.on('leave', function (data) {
-    console.log("leave", data)
     socket.leave(data.code);
   });
 });
 
 
 io.on('disconnect', () => {
-  console.log("disconnect")
   io.connect();
 });

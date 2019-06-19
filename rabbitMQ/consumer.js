@@ -7,5 +7,4 @@ rabbit.reciveToQueue('busesQueue', function (value) {
         if (err) throw err;
         rabbit.sendToQueue('dataQueue', JSON.stringify(rows[0]));
     });
-
 }, { noAck: true });

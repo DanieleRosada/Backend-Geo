@@ -1,4 +1,4 @@
-const producerRMQ = require('./rabbitMQ/producer');
+// const producerRMQ = require('./rabbitMQ/producer');
 const consumerRMQ = require('./rabbitMQ/consumer');
 const socketIO = require('./socketIO/socket');
 
@@ -6,25 +6,12 @@ const app = require('express')();
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
-const busesController = require('./controllers/buses');
-const dataController = require('./controllers/data');
-
 app.use(cors())
 app.use(bodyParser.json());
 
-app.get('/busesMenu', function (req, res){
-    busesController.getBuses( function(err, rows){
-        if(err) res.send(err);
-        res.send(rows);
-    });
-});
-
-app.post('/busData', function (req, res) {
-    let busCode = req.body.buscode;
-    dataController.getData(busCode, function(err, rows){
-        if(err) res.send(err);
-        res.send(rows);
-    });
-});
+app.use('/buses', require('./routes/buses'));
+app.use('/data', require('./routes/data'));
+app.use('/users', require('./routes/users'));
+app.use('/companies', require('./routes/companies'));
 
 app.listen(3000);

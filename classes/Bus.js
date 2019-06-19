@@ -1,7 +1,6 @@
-const panorama = require('google-panorama-by-location');
 const uuidv4 = require('uuid/v4');
 
-class Bus {
+module.exports = class Bus {
 
     constructor(busCode, countsPassengers, passengers, latlng) {
         this.BusCode = busCode;
@@ -11,14 +10,12 @@ class Bus {
 
         this.DoorIsOpen = false;
         this.saveData = [];
-
-        this.configuration = { radius: +2000 }; //radius in meters
     }
 
-    randomCoordinate() {
+    randomCoordinate(radius) {
         var y0 = +this.Latlng[0];
         var x0 = +this.Latlng[1];
-        var rd = this.configuration.radius / 111300;
+        var rd = radius / 111300;
 
         var u = Math.random();
         var v = Math.random();
@@ -30,17 +27,9 @@ class Bus {
 
         var newlat = y + y0;
         var newlon = x + x0;
-        return [newlat, newlon];
-    }
 
-    coordinateOnStreet() {
-        return new Promise((resolve, reject) => {
-            panorama(this.randomCoordinate(), this.configuration, (err, result) => {
-                if (err) this.coordinateOnStreet();
-                this.Latlng = [result.latitude.toFixed(6), result.longitude.toFixed(6)];
-                resolve(this.Latlng);
-            });
-        });
+        this.latlng = [newlat.toFixed(6), newlon.toFixed(6)];
+        return this.latlng;
     }
 
     updatePassengers() {
@@ -55,30 +44,32 @@ class Bus {
         return this.DoorIsOpen;
     }
 
-    async generatePayload() {
+    generatePayload() {
         let obj = {
             id: uuidv4(),
             buscode: this.BusCode,
             doorisopen: this.DoorIsOpen,
             passengers: this.updatePassengers(),
-            latlng: await this.coordinateOnStreet(),
+            latlng: this.randomCoordinate(2000),
             timestamp: new Date()
         };
+
         return this.stateConnection(obj);
     }
 
     stateConnection(obj) {
-        if (Math.random() >= 0.1) //online
-        {
+        if (this.IsOnline()) {
             this.saveData.push(obj);
             let Data = JSON.parse(JSON.stringify(this.saveData));
             this.saveData = [];
             return Data;
         }
-        this.saveData.push(obj); //offline
+        this.saveData.push(obj);
         return null;
     }
 
-}
+    IsOnline() {
+        return Math.random() >= 0.1;
+    }
 
-module.exports = Bus;
+}
