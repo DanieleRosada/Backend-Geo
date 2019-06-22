@@ -35,10 +35,16 @@ module.exports = {
             message: "Not acceptable, password is too short, min: 4 characters"
         };
     },
-    conflict() {
+    conflictEmail() {
         return {
             status: 409,
             message: "Conflict, email already exists"
+        };
+    },
+    conflictCompanies(){
+        return {
+            status: 409,
+            message: "Conflict, VAT already exists"
         };
     },
     internalServerError() {

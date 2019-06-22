@@ -4,17 +4,18 @@ const dataController = require("../controllers/data");
 const rabbit = require('../structure/rabbit');
 
 
-var lastRs = [];
+var lastRows = [];
 var buses = [];
 inizializate();
 
 function inizializate() {
-    busesController.getBuses((err, rs) => {
+    busesController.getBuses((err, rows) => {
         if (err) throw err;
-        if (buses.length == 0 || lastRs != rs) {
+        if (buses.length == 0 || lastRows != rows) {
+            lastRows = rows;
             buses = [];
 
-            rs.forEach(bus => {
+            rows.forEach(bus => {
                 dataController.getLastData(bus.busCode, (err, lastPosition) => {
                     if (err) throw err;
                     buses.push(new Bus(
@@ -25,7 +26,6 @@ function inizializate() {
                     ));
                 });
             });
-            lastRs = rs;
         }
     });
 }
