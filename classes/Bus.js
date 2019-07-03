@@ -8,68 +8,88 @@ module.exports = class Bus {
         this.Passengers = passengers;
         this.Latlng = latlng;
 
-        this.DoorIsOpen = false;
-        this.saveData = [];
+        this.StopCode = null;
+        this.DoorIsOpen = null;
+        this.Online = null;
+        this.SaveData = [];
     }
 
     randomCoordinate(radius) {
-        var y0 = +this.Latlng[0];
-        var x0 = +this.Latlng[1];
-        var rd = radius / 111300;
+        let y0 = +this.Latlng[0];
+        let x0 = +this.Latlng[1];
+        let rd = radius / 111300;
 
-        var u = Math.random();
-        var v = Math.random();
+        let u = Math.random();
+        let v = Math.random();
 
-        var w = rd * Math.sqrt(u);
-        var t = 2 * Math.PI * v;
-        var x = w * Math.cos(t);
-        var y = w * Math.sin(t);
+        let w = rd * Math.sqrt(u);
+        let t = 2 * Math.PI * v;
+        let x = w * Math.cos(t);
+        let y = w * Math.sin(t);
 
-        var newlat = y + y0;
-        var newlon = x + x0;
+        let newlat = y + y0;
+        let newlon = x + x0;
 
-        this.latlng = [newlat.toFixed(6), newlon.toFixed(6)];
-        return this.latlng;
+        return this.Latlng = [newlat.toFixed(6), newlon.toFixed(6)];
     }
 
-    updatePassengers() {
-        if (!this.CountsPassengers) return -1;
-        if (this.DoorIsOpen) this.Passengers = Math.floor(Math.random() * 61); //0-60 Passengers
-
-        return this.Passengers;
+    statePassengers() {
+        if (!this.CountsPassengers || this.DoorIsOpen) return null;
+        return this.Passengers = Math.floor(Math.random() * 61); //0-60 Passengers
     }
 
     stateDoors() {
-        this.DoorIsOpen = Math.random() >= 0.99;
-        return this.DoorIsOpen;
-    }
+        let changeState;
+        if (this.DoorIsOpen == true) {
+            changeState = Math.random() >= 0.30;
+            if (changeState) return null;
 
-    generatePayload() {
-        let obj = {
-            id: uuidv4(),
-            buscode: this.BusCode,
-            doorisopen: this.DoorIsOpen,
-            passengers: this.updatePassengers(),
-            latlng: this.randomCoordinate(2000),
-            timestamp: new Date()
-        };
-
-        return this.stateConnection(obj);
+            return this.DoorIsOpen = false;
+        }
+        changeState = Math.random() >= 0.95;
+        if (!changeState) return this.DoorIsOpen = null;
+      
+        this.StopCode = uuidv4();
+        return this.DoorIsOpen = true;
     }
 
     stateConnection(obj) {
-        if (this.IsOnline()) {
-            this.saveData.push(obj);
-            let Data = JSON.parse(JSON.stringify(this.saveData));
-            this.saveData = [];
-            return Data;
+        this.Online = Math.random() >= 0.1;
+        if (!this.Online) {
+            this.SaveData.push(obj);
+            return null;
         }
-        this.saveData.push(obj);
-        return null;
+        this.SaveData.push(obj);
+        let data = JSON.parse(JSON.stringify(this.SaveData));
+        this.SaveData = [];
+        return data;
     }
 
-    IsOnline() {
-        return Math.random() >= 0.1;
+    payload() {
+        if(this.DoorIsOpen != true) this.randomCoordinate(2000);
+    
+
+        let data = {
+            timestamp: new Date(),
+            buscode: this.BusCode,
+            latlng: this.Latlng,
+            doorisopen: null,
+            passengers: null
+        };
+
+        return data;
     }
 
+    positionEvent() {
+        return this.stateConnection(this.payload());
+    }
+
+    doorEvent() {
+        let data = this.payload();
+        if (this.stateDoors() == null) return null;
+        data.doorisopen = this.DoorIsOpen;
+        data.passengers = this.statePassengers();
+        data.stopcode = this.StopCode;
+        return this.stateConnection(data);
+    }
 }

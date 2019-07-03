@@ -4,55 +4,97 @@ const dataController = require("../controllers/data");
 const rabbit = require('../structure/rabbit');
 
 
-var lastRows = [];
-var buses = [];
+var Buses = [];
 inizializate();
 
+
+
 function inizializate() {
-    busesController.getBuses((err, rows) => {
+    busesController.getBuses((err, listBuses) => {
         if (err) throw err;
-        if (buses.length == 0 || lastRows != rows) {
-            lastRows = rows;
-            buses = [];
 
-            rows.forEach(bus => {
-                dataController.getLastData(bus.busCode, (err, lastPosition) => {
-                    if (err) throw err;
-                    buses.push(new Bus(
-                        bus.busCode,
-                        bus.countsPassengers,
-                        lastPosition.length > 0 ? lastPosition[0].passengers : 0,
-                        lastPosition.length > 0 ? lastPosition[0].latlng : bus.headquarters
-                    ));
-                });
-            });
-        }
+        listBuses.forEach(b => {
+            Buses.push(new Bus(
+                b.busCode,
+                b.countsPassengers,
+                0,
+                b.headquarters
+            ));
+        });
+        setInterval(position, 10000);
+        setInterval(door, 5000);
     });
 }
 
-function sendState() {
-    buses.forEach((bus) => {
-        bus.stateDoors(bus);
-        state(bus);
+function position() {
+    Buses.forEach((bus) => {
+        sendState(bus.positionEvent());
     });
 }
 
-function sendStateWhenDoorIsOpen() {
-    buses.forEach((bus) => {
-        if (bus.stateDoors()) state(bus);
+function door() {
+    Buses.forEach((bus) => {
+        sendState(bus.doorEvent());
     });
 }
-function state(bus) {
-    let payload = bus.generatePayload();
-    if (payload){
+function sendState(payload) {
+    if (payload) {
         payload.forEach(e => {
             rabbit.sendToQueue('busesQueue', JSON.stringify(e));
         });
     }
 }
 
-setInterval(inizializate, 60000);
 
-setInterval(sendState, 10000);
+// var LastBuses = [];
+// var Buses = [];
 
-setInterval(sendStateWhenDoorIsOpen, 1000);
+// inizializate();
+// setInterval(inizializate, 60000);
+// setInterval(position, 10000);
+// setInterval(door, 5000);
+
+// function inizializate() {
+//     busesController.getBuses((err, listBuses) => {
+//         if (err) throw err;
+
+//         if (Buses.length == 0 || LastBuses != listBuses) {
+//             LastBuses = listBuses;
+//             Buses = [];
+
+//             dataController.getLastData((err, lastData) => {
+//                 if (err) throw err;
+
+//                 listBuses.forEach(b => {
+//                     let target = lastData.find(d => d.buscode == listBuses.busCode);
+//                     Buses.push(new Bus(
+//                         b.busCode,
+//                         b.countsPassengers,
+//                         target ? target.passengers : 0,
+//                         target ? target.latlng : b.headquarters
+//                     ));
+//                 });
+//             });
+//         }
+//     });
+// }
+
+// function position() {
+//     Buses.forEach((bus) => {
+//         sendState(bus.positionEvent());
+//     });
+// }
+
+// function door() {
+//     Buses.forEach((bus) => {
+//         sendState(bus.doorEvent());
+//     });
+// }
+// function sendState(payload) {
+//     if (payload) {
+//         payload.forEach(e => {
+//             rabbit.sendToQueue('busesQueue', JSON.stringify(e));
+//         });
+//     }
+// }
+

@@ -27,12 +27,17 @@ module.exports = {
         queryController.postgres(query, params, callback);
     },
     updateUser(user, callback) {
-        let query = `UPDATE public.users SET email=$1, username=$2, password=$3, company=$4 role=$5 WHERE email= $6`;
-        let params = [user.email, user.username, user.password, user.company, user.role, user.previousEmail];
+        let query = `UPDATE public.users SET email=$1, username=$2, password=$3, company=$4, role=$5 WHERE email= $6`;
+        let params = [user.email, user.username, user.bcryptPassword, user.company, user.role, user.previousEmail];
+        queryController.postgres(query, params, callback);
+    },
+    updateUserNoPassword(user, callback) {
+        let query = `UPDATE public.users SET email=$1, username=$2, company=$3, role=$4 WHERE email= $5`;
+        let params = [user.email, user.username, user.company, user.role, user.previousEmail];
         queryController.postgres(query, params, callback);
     },
     deleteUser(email, callback) {
-        let query = `DELETE FROM UPDATE public.users WHERE email=$1`;
+        let query = `DELETE FROM public.users WHERE email=$1`;
         let params = [email];
         queryController.postgres(query, params, callback);
     },
@@ -45,19 +50,19 @@ module.exports = {
 
             callback({
                 status: 200,
-                role : rows[0].role,
+                role: rows[0].role,
                 token: token
             });
         });
     },
+
     select(token, callback) {
         if (token.role == roles.owner) this.getUsers(callback);
-        else if (token.role == roles.administartor) this.getUsersByCompany(token.company, callback);
-        else callback(statusController.forbidden(), null);
+        else if (token.role == roles.admin) this.getUsersByCompany(token.company, callback);
+        else callback(statusController.forbidden(), []);
     },
-
     create(user, token, callback) {
-        if (!roles.canDoOperation(token, user.company)) callback(statusController.forbidden());
+        if (roles.canDoOperation(token, user.company) < 1) callback(statusController.forbidden());
 
         const func = () => {
             return new Promise((resolve, reject) => {
@@ -77,28 +82,42 @@ module.exports = {
         queryController.transaction(func, callback);
     },
 
-    update(token, user, callback) {
+    update(user, token, callback) {
+        if (roles.canDoOperation(token, user.company) < 1) callback(statusController.forbidden());
+
         const func = () => {
             return new Promise((resolve, reject) => {
                 this.getUserByEmail(user.email, (err, rows) => {
                     if (err) reject(statusController.internalServerError());
                     if (rows.length > 0 && user.email != user.previousEmail) reject(statusController.conflictEmail());
-                    if (user.password.length < 3) reject(statusController.notacceptable());
 
-                    user.bcryptPassword = bcrypt.hashSync(user.password, null, null);
-                    this.updateUser(user, (err, rows) => {
-                        if (err) reject(statusController.internalServerError());
-                        resolve();
-                    });
-                })
+                    if (!user.password || user.password == "") {
+                        this.updateUserNoPassword(user, (err, rows) => {
+                            if (err) reject(statusController.internalServerError());
+                            resolve();
+                        });
+                    }
+                    else {
+                        if (user.password.length < 3) reject(statusController.notacceptable());
+
+                        user.bcryptPassword = bcrypt.hashSync(user.password, null, null);
+                        this.updateUser(user, (err, rows) => {
+                            if (err) reject(statusController.internalServerError());
+                            resolve();
+                        });
+                    }
+                });
             });
         }
 
-        if (!roles.canDoOperation(token, user.company)) callback(statusController.forbidden());
         queryController.transaction(func, callback);
     },
-    delete(token, user, callback) {
-        if (!roles.canDoOperation(token, user.company)) callback(statusController.forbidden());
-        this.deleteUser(user.email, callback)
+    delete(user, token, callback) {
+        if (roles.canDoOperation(token, user.company) < 1) callback(statusController.forbidden());
+
+        this.deleteUser(user.email, (err, rows) => {
+            if (err) callback(statusController.internalServerError())
+            callback(statusController.ok())
+        });
     }
 }

@@ -11,14 +11,6 @@ router.post('/login', function (req, res) {
     });
 });
 
-router.get('/me', verifyToken, function (req, res) {
-    let email = req.token.email;
-    usersController.getUserByEmail(email, (err, rows) => {
-        if (err) res.send(err)
-        res.send(rows);
-    });
-});
-
 router.get('/roles', verifyToken, function (req, res) {
     let role = req.token.role;
     let rs = rolesController.roles(role);
@@ -41,17 +33,15 @@ router.post('/', verifyToken, function (req, res) {
 
 router.put('/', verifyToken, function (req, res) {
     let user = req.body.user;
-    usersController.update(user, req.token, (err, rows) => {
-        if (err) res.send(err)
-        res.send(rows);
+    usersController.update(user, req.token, (rs) => {
+        res.status(rs.status).json(rs);
     });
 });
 
 router.delete('/', verifyToken, function (req, res) {
     let user = req.body.user;
-    usersController.delete(user, req.token, (err, rows) => {
-        if (err) res.send(err)
-        res.send(rows);
+    usersController.delete(user, req.token, (rs) => {
+        res.status(rs.status).json(rs);
     });
 });
 

@@ -30,11 +30,11 @@ module.exports = {
     },
     select(token, callback){
         if (token.role == rolesController.owner) this.getCompanies(callback);      
-        else if(token.role == rolesController.administartor) this.getCompanyByVAT(token.company, callback);
-        else return [];
+        else if(token.role == rolesController.admin) this.getCompanyByVAT(token.company, callback);
+        else callback(statusController.forbidden(), []);
     },
     create(company, token, callback){
-        if (!rolesController.isOwner(token, company.VAT)) callback(statusController.forbidden());
+        if (rolesController.canDoOperation(token, company.VAT) != 2) callback(statusController.forbidden());
 
         const func = () => {
             return new Promise((resolve, reject) => {
@@ -53,7 +53,7 @@ module.exports = {
         queryController.transaction(func, callback);
     },
     update(company, token, callback){
-        if (!rolesController.canDoOperation(token, company.VAT)) callback(statusController.forbidden());
+        if (rolesController.canDoOperation(token, company.VAT) < 1) callback(statusController.forbidden());
 
         const func = () => {
             return new Promise((resolve, reject) => {
@@ -72,9 +72,9 @@ module.exports = {
         queryController.transaction(func, callback);
     },
     delete(company, token, callback){
-        if (!rolesController.isOwner(token)) callback(null, statusController.forbidden());
+        if (rolesController.canDoOperation(token, company.VAT) != 2) callback(statusController.forbidden());
 
-        this.deleteCompany(company.VAT, (err, rows)=>{
+        this.deleteCompany(company.VAT, (err, rows)=> {
             if (err) callback(statusController.internalServerError())
             callback(statusController.ok())
         });
