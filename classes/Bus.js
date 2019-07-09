@@ -1,4 +1,5 @@
 const uuidv4 = require('uuid/v4');
+const moment = require('moment');
 
 module.exports = class Bus {
 
@@ -47,7 +48,7 @@ module.exports = class Bus {
             return this.DoorIsOpen = false;
         }
         changeState = Math.random() >= 0.95;
-        if (!changeState) return this.DoorIsOpen = null;
+        if (!changeState) return null;
       
         this.StopCode = uuidv4();
         return this.DoorIsOpen = true;
@@ -67,14 +68,14 @@ module.exports = class Bus {
 
     payload() {
         if(this.DoorIsOpen != true) this.randomCoordinate(2000);
-    
 
         let data = {
-            timestamp: new Date(),
+            timestamp: moment(),
             buscode: this.BusCode,
             latlng: this.Latlng,
             doorisopen: null,
-            passengers: null
+            passengers: null,
+            stopcode: this.DoorIsOpen ? this.StopCode : null
         };
 
         return data;

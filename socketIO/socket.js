@@ -13,11 +13,7 @@ io.use((socket, next) => {
   }
   else next(new Error('Authentication error'));
 })
-.on('connection', (socket) => {
-    rabbit.reciveToQueue('dataQueue', function (data) {
-      let position = JSON.parse(data.content.toString());
-      socket.to(position.buscode).emit("data", position);
-    }, { noAck: true });
+  .on('connection', (socket) => {
 
     socket.on('join', function (data) {
       socket.join(data.code);
@@ -28,3 +24,7 @@ io.use((socket, next) => {
     });
 
   });
+
+rabbit.reciveToQueue('dataQueue', function (position) {
+  io.to(position.buscode).emit("data", position);
+});
